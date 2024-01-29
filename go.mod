@@ -1,4 +1,4 @@
-module logrus-mask
+module github.com/Jdemon/logrus-mask
 
 go 1.21
 
