@@ -1,4 +1,4 @@
-package logger
+package logm
 
 import (
 	"fmt"
@@ -38,19 +38,25 @@ const appNameKey = "app_name"
 func newStandardLogger() *Logger {
 	configDefault := &Config{}
 	defaults.SetDefaults(configDefault)
-	return newLogger(configDefault, "-")
+	return newLogger(configDefault, "")
 }
 
 func newLogger(config *Config, appName string) *Logger {
 	logger := logrus.New()
 	logger.SetLevel(parseLogLevel(config.Level))
 	logger.SetReportCaller(false)
+
+	defaultField := logrus.Fields{}
+	if appName != "" {
+		defaultField = logrus.Fields{
+			appNameKey: appName,
+		}
+	}
+
 	sensitiveFields := config.Masking.FieldNames
 	sensitiveFields = append(sensitiveFields, defaultSensitiveFields...)
 	logger.SetFormatter(&JSONFormatter{
-		defaultField: logrus.Fields{
-			appNameKey: appName,
-		},
+		defaultField:    defaultField,
 		maskingEnabled:  config.Masking.Enabled,
 		sensitiveFields: removeDuplicates(sensitiveFields),
 	})
