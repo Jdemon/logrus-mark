@@ -94,9 +94,10 @@ func maskKeyValue(key string, value string) string {
 		return m.Mobile(value)
 	case "id", "passport", "passport_id", "passport_no", "passport_number":
 		return m.ID(value)
-	case "phone_number", "phone_no", "tel", "telephone_no", "telephone", "phone",
-		"card_no", "credit_card", "debit_card", "credit_card_no", "debit_card_no":
+	case "phone_number", "phone_no", "tel", "telephone_no", "telephone", "phone":
 		return m.Mobile(value)
+	case "card_no", "credit_card", "debit_card", "credit_card_no", "debit_card_no":
+		return m.CreditCard(value)
 	case "national_id", "cid", "citizen_id":
 		return cidMasker(value)
 	default:
