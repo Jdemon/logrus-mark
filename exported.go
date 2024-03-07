@@ -10,7 +10,7 @@ import (
 var std = newStandardLogger()
 
 func NewLogger(config *Config, appName string) {
-	std = newLogger(config, appName)
+	std = newLogger(config, appName, nil)
 }
 
 func GetLogger() *Logger {

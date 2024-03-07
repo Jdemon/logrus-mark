@@ -19,7 +19,7 @@ type (
 
 	ConfigMasking struct {
 		Enabled    bool     `mapstructure:"enabled" default:"true"`
-		FieldNames []string `mapstructure:"field-names" default:"[password]"`
+		FieldNames []string `mapstructure:"field-names" default:"[field-names,password]"`
 	}
 )
 
@@ -30,7 +30,7 @@ var defaultSensitiveFields = []string{
 	"credit_card", "debit_card", "credit_card_no", "debit_card_no",
 	"id", "passport", "passport_id", "passport_no", "passport_number",
 	"national_id", "cid", "citizen_id", "cvc", "password",
-	"x-api-key", "authorization", "x-authorization",
+	"x-api-key", "authorization", "x-authorization", "field-names",
 }
 
 const appNameKey = "app_name"
@@ -38,10 +38,10 @@ const appNameKey = "app_name"
 func newStandardLogger() *Logger {
 	configDefault := &Config{}
 	defaults.SetDefaults(configDefault)
-	return newLogger(configDefault, "")
+	return newLogger(configDefault, "", nil)
 }
 
-func newLogger(config *Config, appName string) *Logger {
+func newLogger(config *Config, appName string, formatter logrus.Formatter) *Logger {
 	logger := logrus.New()
 	logger.SetLevel(parseLogLevel(config.Level))
 	logger.SetReportCaller(false)
@@ -55,10 +55,11 @@ func newLogger(config *Config, appName string) *Logger {
 
 	sensitiveFields := config.Masking.FieldNames
 	sensitiveFields = append(sensitiveFields, defaultSensitiveFields...)
-	logger.SetFormatter(&JSONFormatter{
+	logger.SetFormatter(&LoggerFormatter{
 		defaultField:    defaultField,
 		maskingEnabled:  config.Masking.Enabled,
 		sensitiveFields: removeDuplicates(sensitiveFields),
+		formatter:       formatter,
 	})
 	log := Logger{
 		Logger: logger,

@@ -89,3 +89,18 @@ func TestPanicF(t *testing.T) {
 	}()
 	Panicf("%s", "test")
 }
+
+func BenchmarkLoggerMasking(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		WithFields(logrus.Fields{
+			"data": logrus.Fields{
+				"password":      "P@ssw0rd",
+				"mobile_number": "0909263742",
+				"id":            "112132321312",
+				"firstname":     "John",
+				"lastName":      "Doe",
+			},
+			"credit_card": "4231234512341234",
+		}).Info("benchmark test")
+	}
+}

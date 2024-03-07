@@ -9,16 +9,16 @@ import (
 	"strings"
 )
 
-type JSONFormatter struct {
+type LoggerFormatter struct {
 	defaultField    logrus.Fields
 	callerSkip      int
 	maskingEnabled  bool
 	sensitiveFields []string
-	jsonFormatter   *logrus.JSONFormatter
+	formatter       logrus.Formatter
 }
 
-func (f *JSONFormatter) initJSONFormatter() {
-	f.jsonFormatter = &logrus.JSONFormatter{
+func (f *LoggerFormatter) initFormatter() {
+	f.formatter = &logrus.JSONFormatter{
 		FieldMap: logrus.FieldMap{
 			logrus.FieldKeyTime: "@timestamp",
 			logrus.FieldKeyMsg:  "message",
@@ -26,9 +26,9 @@ func (f *JSONFormatter) initJSONFormatter() {
 	}
 }
 
-func (f *JSONFormatter) Format(entry *logrus.Entry) ([]byte, error) {
-	if f.jsonFormatter == nil {
-		f.initJSONFormatter()
+func (f *LoggerFormatter) Format(entry *logrus.Entry) ([]byte, error) {
+	if f.formatter == nil {
+		f.initFormatter()
 	}
 	newEntry := entry.WithFields(f.defaultField)
 	if f.maskingEnabled {
@@ -37,10 +37,10 @@ func (f *JSONFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 		}
 	}
 	entry.Data = newEntry.Data
-	return f.jsonFormatter.Format(entry)
+	return f.formatter.Format(entry)
 }
 
-func (f *JSONFormatter) maskFields(fields interface{}) interface{} {
+func (f *LoggerFormatter) maskFields(fields interface{}) interface{} {
 	newData := make(logrus.Fields)
 
 	switch value := fields.(type) {
@@ -58,7 +58,7 @@ func (f *JSONFormatter) maskFields(fields interface{}) interface{} {
 	return newData
 }
 
-func (f *JSONFormatter) valueMasking(newData logrus.Fields, key string, fieldValue interface{}) logrus.Fields {
+func (f *LoggerFormatter) valueMasking(newData logrus.Fields, key string, fieldValue interface{}) logrus.Fields {
 	snakeKey := strings.ToLower(strcase.ToSnake(key))
 	//If the field is sensitive
 	if slices.Contains(f.sensitiveFields, snakeKey) {
@@ -106,7 +106,7 @@ func maskKeyValue(key string, value string) string {
 }
 
 // The maskArrayFields method is added to handle array type fieldValue separately.
-func (f *JSONFormatter) maskArrayFields(arrayFieldValue []interface{}) []interface{} {
+func (f *LoggerFormatter) maskArrayFields(arrayFieldValue []interface{}) []interface{} {
 	//Looping over array elements to mask them
 	for index, value := range arrayFieldValue {
 		arrayFieldValue[index] = f.maskFields(value)
