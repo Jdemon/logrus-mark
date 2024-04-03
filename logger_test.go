@@ -91,6 +91,7 @@ func TestPanicF(t *testing.T) {
 }
 
 func BenchmarkLoggerMasking(b *testing.B) {
+
 	for i := 0; i < b.N; i++ {
 		WithFields(logrus.Fields{
 			"data": logrus.Fields{

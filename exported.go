@@ -3,8 +3,9 @@ package logm
 import (
 	"context"
 	"encoding/json"
-	"github.com/sirupsen/logrus"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 var std = newStandardLogger()

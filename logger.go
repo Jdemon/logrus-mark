@@ -2,24 +2,25 @@ package logm
 
 import (
 	"fmt"
-	"github.com/mcuadros/go-defaults"
-	"github.com/sirupsen/logrus"
 	"runtime"
 	"strings"
+
+	"github.com/mcuadros/go-defaults"
+	"github.com/sirupsen/logrus"
 )
 
 type (
 	Logger struct {
-		*logrus.Logger
+		*logrus.Logger `yaml:"log"`
 	}
 	Config struct {
-		Level   string        `mapstructure:"level" default:"debug"`
-		Masking ConfigMasking `mapstructure:"masking"`
+		Level   string        `yaml:"level" env:"LOG_LEVEL" env-default:"debug" mapstructure:"level" default:"debug"`
+		Masking ConfigMasking `yaml:"masking" mapstructure:"masking"`
 	}
 
 	ConfigMasking struct {
-		Enabled    bool     `mapstructure:"enabled" default:"true"`
-		FieldNames []string `mapstructure:"field-names" default:"[field-names,password]"`
+		Enabled    bool     `yaml:"enabled" env:"LOG_MASKING_ENABLED" env-default:"true" mapstructure:"enabled" default:"true"`
+		FieldNames []string `yaml:"field-names" env:"LOG_MASKING_ENABLED" mapstructure:"field-names" default:""`
 	}
 )
 

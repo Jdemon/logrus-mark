@@ -2,11 +2,12 @@ package logm
 
 import (
 	"fmt"
+	"slices"
+	"strings"
+
 	m "github.com/ggwhite/go-masker"
 	"github.com/iancoleman/strcase"
 	"github.com/sirupsen/logrus"
-	"slices"
-	"strings"
 )
 
 type LoggerFormatter struct {
