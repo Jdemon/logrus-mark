@@ -11,16 +11,16 @@ import (
 
 type (
 	Logger struct {
-		*logrus.Logger `yaml:"log"`
+		*logrus.Logger
 	}
 	Config struct {
-		Level   string        `yaml:"level" env:"LOG_LEVEL" env-default:"debug" mapstructure:"level" default:"debug"`
+		Level   string        `yaml:"level" env:"LOGGER_LEVEL" env-default:"debug" mapstructure:"level" default:"debug"`
 		Masking ConfigMasking `yaml:"masking" mapstructure:"masking"`
 	}
 
 	ConfigMasking struct {
-		Enabled    bool     `yaml:"enabled" env:"LOG_MASKING_ENABLED" env-default:"true" mapstructure:"enabled" default:"true"`
-		FieldNames []string `yaml:"field-names" env:"LOG_MASKING_ENABLED" mapstructure:"field-names" default:""`
+		Enabled    bool     `yaml:"enabled" env:"LOGGER_MASKING_ENABLED" env-default:"true" mapstructure:"enabled" default:"true"`
+		FieldNames []string `yaml:"field-names" env:"LOGGER_MASKING_ENABLED" mapstructure:"field-names" default:""`
 	}
 )
 
