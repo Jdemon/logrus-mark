@@ -2,6 +2,7 @@ package logm
 
 import (
 	"fmt"
+	"os"
 	"slices"
 	"strings"
 
@@ -19,11 +20,21 @@ type LoggerFormatter struct {
 }
 
 func (f *LoggerFormatter) initFormatter() {
+	fieldMap := logrus.FieldMap{
+		logrus.FieldKeyTime: "@timestamp",
+		logrus.FieldKeyMsg:  "message",
+	}
+
+	env, _ := os.LookupEnv("ENV")
+	if env == "dev" {
+		f.formatter = &logrus.TextFormatter{
+			FieldMap: fieldMap,
+		}
+		return
+	}
+
 	f.formatter = &logrus.JSONFormatter{
-		FieldMap: logrus.FieldMap{
-			logrus.FieldKeyTime: "@timestamp",
-			logrus.FieldKeyMsg:  "message",
-		},
+		FieldMap: fieldMap,
 	}
 }
 
@@ -66,7 +77,7 @@ func (f *LoggerFormatter) valueMasking(newData logrus.Fields, key string, fieldV
 		if valueStr, ok := fieldValue.(string); ok {
 			newData[snakeKey] = maskKeyValue(snakeKey, valueStr)
 		} else {
-			newData[snakeKey] = "******"
+			newData[snakeKey] = "***mask***"
 		}
 		return newData
 	}

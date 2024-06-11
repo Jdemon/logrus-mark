@@ -2,11 +2,12 @@ package logm
 
 import (
 	"errors"
+	"testing"
+	"time"
+
 	"github.com/magiconair/properties/assert"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
-	"testing"
-	"time"
 )
 
 func TestGetLogger(t *testing.T) {
@@ -91,7 +92,6 @@ func TestPanicF(t *testing.T) {
 }
 
 func BenchmarkLoggerMasking(b *testing.B) {
-
 	for i := 0; i < b.N; i++ {
 		WithFields(logrus.Fields{
 			"data": logrus.Fields{
