@@ -1,4 +1,4 @@
-package logm
+package mlog
 
 import (
 	"fmt"
@@ -14,13 +14,13 @@ type (
 		*logrus.Logger
 	}
 	Config struct {
-		Level   string        `yaml:"level" env:"LOGGER_LEVEL" env-default:"debug" mapstructure:"level" default:"debug"`
-		Masking ConfigMasking `yaml:"masking" mapstructure:"masking"`
+		Level   string        `mapstructure:"level" default:"debug"`
+		Masking ConfigMasking `mapstructure:"masking"`
 	}
 
 	ConfigMasking struct {
-		Enabled    bool     `yaml:"enabled" env:"LOGGER_MASKING_ENABLED" env-default:"true" mapstructure:"enabled" default:"true"`
-		FieldNames []string `yaml:"field-names" env:"LOGGER_MASKING_ENABLED" mapstructure:"field-names" default:""`
+		Enabled    bool     `mapstructure:"enabled" default:"true"`
+		FieldNames []string `default:""`
 	}
 )
 
@@ -30,11 +30,11 @@ var defaultSensitiveFields = []string{
 	"phone_number", "phone_no", "tel", "telephone_no", "telephone", "phone", "card_no",
 	"credit_card", "debit_card", "credit_card_no", "debit_card_no",
 	"id", "passport", "passport_id", "passport_no", "passport_number",
-	"national_id", "cid", "citizen_id", "cvc", "password",
+	"national_id", "cid", "citizen_id", "cvc", "password", "cif_no", "cif_id",
 	"x-api-key", "authorization", "x-authorization", "field-names",
 }
 
-const appNameKey = "app_name"
+const appNameKey = "appName"
 
 func newStandardLogger() *Logger {
 	configDefault := &Config{}
@@ -46,6 +46,7 @@ func newLogger(config *Config, appName string, formatter logrus.Formatter) *Logg
 	logger := logrus.New()
 	logger.SetLevel(parseLogLevel(config.Level))
 	logger.SetReportCaller(false)
+	logger.AddHook(new(ContextHook))
 
 	defaultField := logrus.Fields{}
 	if appName != "" {
@@ -67,7 +68,7 @@ func newLogger(config *Config, appName string, formatter logrus.Formatter) *Logg
 	}
 
 	entry := log.WithFields(ConvertStructToDataFields(config))
-	entry.Data["file"] = fileInfo(1)
+	entry.Data["file"], entry.Data["function"] = fileInfo(1)
 	entry.Info("initial logger")
 	return &log
 }
@@ -92,8 +93,9 @@ func parseLogLevel(str string) logrus.Level {
 	return c
 }
 
-func fileInfo(skip int) string {
-	_, file, line, ok := runtime.Caller(skip)
+func fileInfo(skip int) (string, string) {
+	var funcName string
+	pc, file, line, ok := runtime.Caller(skip)
 	if !ok {
 		file = "<???>"
 		line = 1
@@ -102,6 +104,10 @@ func fileInfo(skip int) string {
 		if slash >= 0 {
 			file = file[slash+1:]
 		}
+
+		funcName = runtime.FuncForPC(pc).Name()
+		funcName = funcName[strings.LastIndex(funcName, ".")+1:]
 	}
-	return fmt.Sprintf("%s:%d", file, line)
+
+	return fmt.Sprintf("%s:%d", file, line), funcName
 }

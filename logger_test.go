@@ -1,4 +1,4 @@
-package logm
+package mlog
 
 import (
 	"errors"
@@ -93,6 +93,7 @@ func TestPanicF(t *testing.T) {
 
 func BenchmarkLoggerMasking(b *testing.B) {
 	for i := 0; i < b.N; i++ {
+		ctx := context.WithValue(context.Background(), TraceID, "trace-id-value")
 		WithFields(logrus.Fields{
 			"data": logrus.Fields{
 				"password":      "P@ssw0rd",
@@ -102,6 +103,6 @@ func BenchmarkLoggerMasking(b *testing.B) {
 				"lastName":      "Doe",
 			},
 			"credit_card": "4231234512341234",
-		}).Info("benchmark test")
+		}).WithContext(ctx).Info("benchmark test")
 	}
 }

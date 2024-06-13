@@ -1,4 +1,4 @@
-package logm
+package mlog
 
 import (
 	"context"
@@ -80,13 +80,13 @@ func WithTime(t time.Time) *logrus.Entry {
 }
 
 func callerEntry(entry *logrus.Entry, skip int) *logrus.Entry {
-	entry.Data["file"] = fileInfo(skip)
+	entry.Data["file"], entry.Data["function"] = fileInfo(skip)
 	return entry
 }
 
 func caller() *logrus.Entry {
 	entry := std.WithFields(logrus.Fields{})
-	entry.Data["file"] = fileInfo(3)
+	entry.Data["file"], entry.Data["function"] = fileInfo(3)
 	return entry
 }
 
@@ -150,13 +150,38 @@ func Fatalf(format string, args ...interface{}) {
 	caller().Fatalf(format, args...)
 }
 
+func logWithCategory(ctx context.Context, model interface{}, startTime time.Time, logMessage string) {
+	entry := std.WithFields(ConvertStructToFields(model))
+	entry = entry.WithContext(ctx)
+	entry.Data["startTime"] = startTime.Format(logTimeFormat)
+	entry.Data["elapsedTime"] = float64(time.Since(startTime).Milliseconds())
+	callerEntry(entry, 4)
+	entry.Infoln(logMessage)
+}
+
+func Client(ctx context.Context, model ClientLogModel, startTime time.Time) {
+	logWithCategory(ctx, model, startTime, "client")
+}
+
+func Legacy(ctx context.Context, model LegacyLogModel, startTime time.Time) {
+	logWithCategory(ctx, model, startTime, "legacy")
+}
+
+func MessageQueue(ctx context.Context, model MessageQueueLogModel, startTime time.Time) {
+	logWithCategory(ctx, model, startTime, "message_queue")
+}
+
 func ConvertStructToDataFields(v any) logrus.Fields {
+	return logrus.Fields{
+		"data": ConvertStructToFields(v),
+	}
+}
+
+func ConvertStructToFields(v any) logrus.Fields {
 	marshal, _ := json.Marshal(v)
 	fields := make(logrus.Fields)
 	_ = json.Unmarshal(marshal, &fields)
-	return logrus.Fields{
-		"data": fields,
-	}
+	return fields
 }
 
 func removeDuplicates(input []string) []string {

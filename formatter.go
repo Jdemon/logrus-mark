@@ -1,15 +1,15 @@
-package logm
+package mlog
 
 import (
-	"fmt"
 	"os"
 	"slices"
 	"strings"
 
-	m "github.com/ggwhite/go-masker"
 	"github.com/iancoleman/strcase"
 	"github.com/sirupsen/logrus"
 )
+
+const logTimeFormat = "2006-01-02T15:04:05-0700"
 
 type LoggerFormatter struct {
 	defaultField    logrus.Fields
@@ -27,14 +27,17 @@ func (f *LoggerFormatter) initFormatter() {
 
 	env, _ := os.LookupEnv("ENV")
 	if env == "dev" {
-		f.formatter = &logrus.TextFormatter{
+		textFormatter := &logrus.TextFormatter{
 			FieldMap: fieldMap,
 		}
-		return
-	}
-
-	f.formatter = &logrus.JSONFormatter{
-		FieldMap: fieldMap,
+		textFormatter.TimestampFormat = logTimeFormat
+		f.formatter = textFormatter
+	} else {
+		jsonFormatter := &logrus.JSONFormatter{
+			FieldMap: fieldMap,
+		}
+		jsonFormatter.TimestampFormat = logTimeFormat
+		f.formatter = jsonFormatter
 	}
 }
 
@@ -75,45 +78,45 @@ func (f *LoggerFormatter) valueMasking(newData logrus.Fields, key string, fieldV
 	//If the field is sensitive
 	if slices.Contains(f.sensitiveFields, snakeKey) {
 		if valueStr, ok := fieldValue.(string); ok {
-			newData[snakeKey] = maskKeyValue(snakeKey, valueStr)
+			newData[key] = maskKeyValue(snakeKey, valueStr)
 		} else {
-			newData[snakeKey] = "***mask***"
+			newData[key] = "<***mask***>"
 		}
 		return newData
 	}
 	switch subFieldValue := fieldValue.(type) {
 	case logrus.Fields:
-		newData[snakeKey] = f.maskFields(subFieldValue)
+		newData[key] = f.maskFields(subFieldValue)
 	case map[string]interface{}:
-		newData[snakeKey] = f.maskFields(subFieldValue)
+		newData[key] = f.maskFields(subFieldValue)
 	case []interface{}:
-		newData[snakeKey] = f.maskArrayFields(subFieldValue)
+		newData[key] = f.maskArrayFields(subFieldValue)
 	default:
-		newData[snakeKey] = subFieldValue
+		newData[key] = subFieldValue
 	}
 	return newData
 }
 
 func maskKeyValue(key string, value string) string {
 	switch key {
-	case "name", "firstname", "first_name", "lastname", "last_name":
-		return m.Name(value)
+	case "name", "firstname", "firstName", "lastname", "lastName":
+		return Name(value)
 	case "addr", "address":
-		return m.Address(value)
+		return Address(value)
 	case "email", "mail":
-		return m.Email(value)
-	case "mobile_no", "mobile_phone", "mobile_number", "mobile":
-		return m.Mobile(value)
+		return Email(value)
+	case "mobile_no", "mobilePhone", "mobile_number", "mobile":
+		return Mobile(value)
 	case "id", "passport", "passport_id", "passport_no", "passport_number":
-		return m.ID(value)
+		return ID(value)
 	case "phone_number", "phone_no", "tel", "telephone_no", "telephone", "phone":
-		return m.Mobile(value)
+		return Mobile(value)
 	case "card_no", "credit_card", "debit_card", "credit_card_no", "debit_card_no":
-		return m.CreditCard(value)
+		return CreditCard(value)
 	case "national_id", "cid", "citizen_id":
-		return cidMasker(value)
+		return CidMasker(value)
 	default:
-		return m.Password(value)
+		return Password(value)
 	}
 }
 
@@ -124,30 +127,4 @@ func (f *LoggerFormatter) maskArrayFields(arrayFieldValue []interface{}) []inter
 		arrayFieldValue[index] = f.maskFields(value)
 	}
 	return arrayFieldValue
-}
-
-func cidMasker(input string) string {
-	// Check if input is empty
-	if len(input) == 0 {
-		return ""
-	}
-
-	// Remove hyphens from the input
-	input = strings.ReplaceAll(input, "-", "")
-
-	// Check if the length of the cleaned input is not 13
-	if len(input) != 13 {
-		return "*-****-*****-**-*"
-	}
-
-	// Construct the masked CID
-	maskedCID := fmt.Sprintf(
-		"%s-%s**-*****-%s-%s",
-		input[:1],
-		input[1:3],
-		input[10:12],
-		input[12:],
-	)
-
-	return maskedCID
 }
